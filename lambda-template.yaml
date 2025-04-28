@@ -77,6 +77,33 @@ Resources:
             Auth:
               Authorizer: NONE
 
+  # Public API Lambda function (no authentication required)
+  PublicApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: public-api.handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Events:
+        PublicApiGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HelloWorldApi
+            Path: /public
+            Method: get
+            Auth:
+              Authorizer: NONE
+        PublicApiOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HelloWorldApi
+            Path: /public
+            Method: options
+            Auth:
+              Authorizer: NONE
+
 Outputs:
   # API Gateway endpoint URL
   HelloWorldApiEndpoint:
@@ -91,6 +118,12 @@ Outputs:
   CorsProxyFunction:
     Description: CORS Proxy Lambda Function ARN
     Value: !GetAtt CorsProxyFunction.Arn
+  PublicApiFunction:
+    Description: Public API Lambda Function ARN
+    Value: !GetAtt PublicApiFunction.Arn
+  PublicApiEndpoint:
+    Description: API Gateway endpoint URL for Public API
+    Value: !Sub https://${HelloWorldApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/public/
   CognitoUserPoolId:
     Description: ID of the Cognito User Pool
     Value: "ca-central-1_9qTJICjCa"

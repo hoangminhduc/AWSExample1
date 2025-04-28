@@ -10,7 +10,8 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400' // 24 hours
+    'Access-Control-Max-Age': '86400', // 24 hours
+    'Vary': 'Origin'
 };
 
 exports.lambdaHandler = async (event, context) => {

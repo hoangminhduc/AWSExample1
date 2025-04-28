@@ -43,6 +43,11 @@
     </div>
 
     <div>
+        <button id="useProtectedApi">Use Protected API</button>
+        <button id="usePublicApi">Use Public API</button>
+    </div>
+
+    <div>
         <label for="token">Bearer Token (optional):</label>
         <input type="text" id="token" placeholder="Paste your ID token here">
     </div>
@@ -57,6 +62,20 @@
     <pre id="results">Results will appear here...</pre>
 
     <script>
+        // API URLs
+        const protectedApiUrl = "https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/hello/";
+        const publicApiUrl = "https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/public/";
+
+        // Set up API URL switcher buttons
+        document.getElementById('useProtectedApi').addEventListener('click', function() {
+            document.getElementById('apiUrl').value = protectedApiUrl;
+        });
+
+        document.getElementById('usePublicApi').addEventListener('click', function() {
+            document.getElementById('apiUrl').value = publicApiUrl;
+        });
+
+        // Test buttons
         document.getElementById('testCors').addEventListener('click', function() {
             const apiUrl = document.getElementById('apiUrl').value;
             testCors(apiUrl, false);

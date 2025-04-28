@@ -1,6 +1,6 @@
 /**
- * CORS Proxy Lambda function
- * This function handles OPTIONS requests and adds CORS headers to all responses
+ * Public API Lambda function
+ * This function provides a public endpoint that doesn't require authentication
  */
 
 // CORS headers for all responses
@@ -15,7 +15,7 @@ const corsHeaders = {
 };
 
 exports.handler = async (event, context) => {
-    console.log('CORS Proxy Event:', JSON.stringify(event, null, 2));
+    console.log('Public API Event:', JSON.stringify(event, null, 2));
 
     // Handle OPTIONS request (CORS preflight)
     if (event.httpMethod === 'OPTIONS') {
@@ -27,10 +27,15 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // For all other requests, just add CORS headers
+    // For all other requests, return a public response
     return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify({ message: 'CORS headers added' })
+        body: JSON.stringify({
+            message: 'Hello from a public API endpoint!',
+            timestamp: new Date().toISOString(),
+            path: event.path,
+            method: event.httpMethod
+        })
     };
 };
