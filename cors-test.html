@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS Test Tool</h1>
+    
+    <div>
+        <label for="apiUrl">API URL:</label>
+        <input type="text" id="apiUrl" value="https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/hello/">
+    </div>
+    
+    <div>
+        <label for="token">Bearer Token (optional):</label>
+        <input type="text" id="token" placeholder="Paste your ID token here">
+    </div>
+    
+    <button id="testCors">Test CORS (No Auth)</button>
+    <button id="testAuth">Test With Auth</button>
+    <button id="testOptions">Test OPTIONS Request</button>
+    
+    <h2>Results:</h2>
+    <pre id="results">Results will appear here...</pre>
+    
+    <script>
+        document.getElementById('testCors').addEventListener('click', function() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            testCors(apiUrl, false);
+        });
+        
+        document.getElementById('testAuth').addEventListener('click', function() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const token = document.getElementById('token').value;
+            testCors(apiUrl, true, token);
+        });
+        
+        document.getElementById('testOptions').addEventListener('click', function() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            testOptions(apiUrl);
+        });
+        
+        function testCors(url, useAuth, token) {
+            const headers = {};
+            if (useAuth && token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+            
+            const results = document.getElementById('results');
+            results.textContent = 'Sending request to ' + url + '...';
+            
+            fetch(url, {
+                method: 'GET',
+                headers: headers,
+                mode: 'cors'
+            })
+            .then(response => {
+                let result = 'Status: ' + response.status + ' ' + response.statusText + '\n\n';
+                result += 'Response Headers:\n';
+                
+                for (const [key, value] of response.headers.entries()) {
+                    result += key + ': ' + value + '\n';
+                }
+                
+                results.textContent = result;
+                
+                return response.text();
+            })
+            .then(data => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    results.textContent += '\nResponse Body:\n' + JSON.stringify(jsonData, null, 2);
+                } catch (e) {
+                    results.textContent += '\nResponse Body:\n' + data;
+                }
+            })
+            .catch(error => {
+                results.textContent += '\n\nError: ' + error.message;
+            });
+        }
+        
+        function testOptions(url) {
+            const results = document.getElementById('results');
+            results.textContent = 'Sending OPTIONS request to ' + url + '...';
+            
+            fetch(url, {
+                method: 'OPTIONS',
+                mode: 'cors'
+            })
+            .then(response => {
+                let result = 'Status: ' + response.status + ' ' + response.statusText + '\n\n';
+                result += 'Response Headers:\n';
+                
+                for (const [key, value] of response.headers.entries()) {
+                    result += key + ': ' + value + '\n';
+                }
+                
+                results.textContent = result;
+                
+                return response.text();
+            })
+            .then(data => {
+                if (data) {
+                    try {
+                        const jsonData = JSON.parse(data);
+                        results.textContent += '\nResponse Body:\n' + JSON.stringify(jsonData, null, 2);
+                    } catch (e) {
+                        results.textContent += '\nResponse Body:\n' + data;
+                    }
+                }
+            })
+            .catch(error => {
+                results.textContent += '\n\nError: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>
