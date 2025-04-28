@@ -1,0 +1,10 @@
+# After creating your GitHub repository, run these commands to push your code:
+
+# Set the remote repository URL (replace YOUR_USERNAME with your GitHub username)
+git remote add origin https://github.com/YOUR_USERNAME/cognito-auth-demo.git
+
+# Push your code to GitHub
+git push -u origin master
+
+# If you're using main branch instead of master:
+# git push -u origin main

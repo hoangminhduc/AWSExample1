@@ -22,6 +22,8 @@ Resources:
         AllowMethods: "'GET,POST,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
         AllowOrigin: "'*'"
+        # When you have your Amplify URL, you can replace '*' with your specific domain:
+        # AllowOrigin: "'https://master.uniqueid.amplifyapp.com'"
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
         Authorizers:
