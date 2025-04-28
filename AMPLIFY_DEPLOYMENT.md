@@ -13,16 +13,15 @@ This guide will walk you through the process of deploying your Cognito Authentic
 1. Create a new repository on GitHub:
    - Go to [GitHub.com](https://github.com) and sign in
    - Click the "+" icon in the top-right corner and select "New repository"
-   - Name your repository (e.g., "cognito-auth-demo")
+   - You've already created the repository "AWSExample1"
    - Choose public or private visibility
    - Do not initialize with README, .gitignore, or license
    - Click "Create repository"
 
 2. Push your local repository to GitHub:
    ```bash
-   # Replace YOUR_USERNAME with your GitHub username
-   git remote add origin https://github.com/YOUR_USERNAME/cognito-auth-demo.git
-   git push -u origin master
+   # You've already pushed to your GitHub repository
+   # The repository URL is: https://github.com/hoangminhduc/AWSExample1.git
    ```
 
 ## Step 2: Deploy to AWS Amplify
