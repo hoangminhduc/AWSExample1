@@ -6,9 +6,7 @@
 // CORS headers for all responses
 const corsHeaders = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*', // Allow any origin
-    // When you have your Amplify URL, you can replace '*' with your specific domain:
-    // 'Access-Control-Allow-Origin': 'https://master.uniqueid.amplifyapp.com',
+    'Access-Control-Allow-Origin': 'https://master.d1mrbp1gvhbsuo.amplifyapp.com',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
 };
