@@ -18,10 +18,13 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
+      BinaryMediaTypes:
+        - '*/*'
       Cors:
         AllowMethods: "'GET,POST,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: "'*'"
+        AllowOrigin: "'https://master.d1mrbp1gvhbsuo.amplifyapp.com'"
+        AllowCredentials: true
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
         Authorizers:

@@ -6,9 +6,11 @@
 // CORS headers for all responses
 const corsHeaders = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*', // Allow any origin for testing
+    'Access-Control-Allow-Origin': 'https://master.d1mrbp1gvhbsuo.amplifyapp.com',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400' // 24 hours
 };
 
 exports.lambdaHandler = async (event, context) => {
@@ -16,10 +18,19 @@ exports.lambdaHandler = async (event, context) => {
 
     // Handle OPTIONS request (CORS preflight)
     if (event.httpMethod === 'OPTIONS') {
+        console.log('Handling OPTIONS request for CORS preflight');
         return {
             statusCode: 200,
-            headers: corsHeaders,
-            body: JSON.stringify({ message: 'CORS preflight successful' })
+            headers: {
+                'Access-Control-Allow-Origin': 'https://master.d1mrbp1gvhbsuo.amplifyapp.com',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Max-Age': '86400',
+                'Content-Type': 'application/json',
+                'Content-Length': '0'
+            },
+            body: ''
         };
     }
 

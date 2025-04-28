@@ -36,65 +36,79 @@
 </head>
 <body>
     <h1>CORS Test Tool</h1>
-    
+
     <div>
         <label for="apiUrl">API URL:</label>
         <input type="text" id="apiUrl" value="https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/hello/">
     </div>
-    
+
     <div>
         <label for="token">Bearer Token (optional):</label>
         <input type="text" id="token" placeholder="Paste your ID token here">
     </div>
-    
+
     <button id="testCors">Test CORS (No Auth)</button>
     <button id="testAuth">Test With Auth</button>
     <button id="testOptions">Test OPTIONS Request</button>
-    
+    <button id="testFetch">Test Fetch with No-CORS</button>
+    <button id="testXhr">Test with XMLHttpRequest</button>
+
     <h2>Results:</h2>
     <pre id="results">Results will appear here...</pre>
-    
+
     <script>
         document.getElementById('testCors').addEventListener('click', function() {
             const apiUrl = document.getElementById('apiUrl').value;
             testCors(apiUrl, false);
         });
-        
+
         document.getElementById('testAuth').addEventListener('click', function() {
             const apiUrl = document.getElementById('apiUrl').value;
             const token = document.getElementById('token').value;
             testCors(apiUrl, true, token);
         });
-        
+
         document.getElementById('testOptions').addEventListener('click', function() {
             const apiUrl = document.getElementById('apiUrl').value;
             testOptions(apiUrl);
         });
-        
+
+        document.getElementById('testFetch').addEventListener('click', function() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            testNoCors(apiUrl);
+        });
+
+        document.getElementById('testXhr').addEventListener('click', function() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const token = document.getElementById('token').value;
+            testXhr(apiUrl, token);
+        });
+
         function testCors(url, useAuth, token) {
             const headers = {};
             if (useAuth && token) {
                 headers['Authorization'] = 'Bearer ' + token;
             }
-            
+
             const results = document.getElementById('results');
             results.textContent = 'Sending request to ' + url + '...';
-            
+
             fetch(url, {
                 method: 'GET',
                 headers: headers,
-                mode: 'cors'
+                mode: 'cors',
+                credentials: 'include'
             })
             .then(response => {
                 let result = 'Status: ' + response.status + ' ' + response.statusText + '\n\n';
                 result += 'Response Headers:\n';
-                
+
                 for (const [key, value] of response.headers.entries()) {
                     result += key + ': ' + value + '\n';
                 }
-                
+
                 results.textContent = result;
-                
+
                 return response.text();
             })
             .then(data => {
@@ -109,25 +123,30 @@
                 results.textContent += '\n\nError: ' + error.message;
             });
         }
-        
+
         function testOptions(url) {
             const results = document.getElementById('results');
             results.textContent = 'Sending OPTIONS request to ' + url + '...';
-            
+
             fetch(url, {
                 method: 'OPTIONS',
-                mode: 'cors'
+                mode: 'cors',
+                credentials: 'include',
+                headers: {
+                    'Access-Control-Request-Method': 'GET',
+                    'Access-Control-Request-Headers': 'authorization,content-type'
+                }
             })
             .then(response => {
                 let result = 'Status: ' + response.status + ' ' + response.statusText + '\n\n';
                 result += 'Response Headers:\n';
-                
+
                 for (const [key, value] of response.headers.entries()) {
                     result += key + ': ' + value + '\n';
                 }
-                
+
                 results.textContent = result;
-                
+
                 return response.text();
             })
             .then(data => {
@@ -143,6 +162,59 @@
             .catch(error => {
                 results.textContent += '\n\nError: ' + error.message;
             });
+        }
+
+        function testNoCors(url) {
+            const results = document.getElementById('results');
+            results.textContent = 'Sending no-cors request to ' + url + '...';
+
+            fetch(url, {
+                method: 'GET',
+                mode: 'no-cors'
+            })
+            .then(response => {
+                results.textContent = 'Response received (opaque response):\n';
+                results.textContent += 'Type: ' + response.type + '\n';
+                results.textContent += 'Status: ' + response.status + '\n';
+                results.textContent += 'OK: ' + response.ok + '\n';
+                results.textContent += '\nNote: With mode="no-cors", you cannot access the response content.';
+            })
+            .catch(error => {
+                results.textContent += '\n\nError: ' + error.message;
+            });
+        }
+
+        function testXhr(url, token) {
+            const results = document.getElementById('results');
+            results.textContent = 'Sending XMLHttpRequest to ' + url + '...';
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.withCredentials = true;
+
+            if (token) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            }
+
+            xhr.onload = function() {
+                let result = 'Status: ' + xhr.status + '\n\n';
+                result += 'Response Headers:\n' + xhr.getAllResponseHeaders() + '\n\n';
+
+                try {
+                    const jsonData = JSON.parse(xhr.responseText);
+                    result += 'Response Body:\n' + JSON.stringify(jsonData, null, 2);
+                } catch (e) {
+                    result += 'Response Body:\n' + xhr.responseText;
+                }
+
+                results.textContent = result;
+            };
+
+            xhr.onerror = function() {
+                results.textContent += '\n\nXHR Error: Network error occurred';
+            };
+
+            xhr.send();
         }
     </script>
 </body>
