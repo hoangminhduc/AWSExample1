@@ -54,6 +54,14 @@ Resources:
             Method: get
             Auth:
               Authorizer: CognitoAuthorizer
+        HelloWorldOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HelloWorldApi
+            Path: /hello
+            Method: options
+            Auth:
+              Authorizer: NONE
 
 Outputs:
   # API Gateway endpoint URL
