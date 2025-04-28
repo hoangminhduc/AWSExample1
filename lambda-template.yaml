@@ -57,7 +57,18 @@ Resources:
             Method: get
             Auth:
               Authorizer: CognitoAuthorizer
-        HelloWorldOptions:
+
+  # CORS Proxy Lambda function
+  CorsProxyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: cors-proxy.handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Events:
+        CorsProxyOptions:
           Type: Api
           Properties:
             RestApiId: !Ref HelloWorldApi
@@ -77,6 +88,9 @@ Outputs:
   HelloWorldFunctionIamRole:
     Description: Implicit IAM Role created for Hello World function
     Value: !GetAtt HelloWorldFunctionRole.Arn
+  CorsProxyFunction:
+    Description: CORS Proxy Lambda Function ARN
+    Value: !GetAtt CorsProxyFunction.Arn
   CognitoUserPoolId:
     Description: ID of the Cognito User Pool
     Value: "ca-central-1_9qTJICjCa"
