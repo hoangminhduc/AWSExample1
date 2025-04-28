@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  Hello World AWS Lambda and Amazon API Gateway REST API
+  Sample AWS SAM template to create a simple Lambda function connected to a REST API.
+  Now with Amazon Cognito authentication for secure access.
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  # Cognito resources are now managed in a separate stack (HelloWorldCognitoPool)
+
+  # API Gateway with Cognito Authorizer
+  HelloWorldApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/ca-central-1_9qTJICjCa"
+            AuthorizationScopes:
+              - email
+              - openid
+              - profile
+
+  # Lambda function for protected API
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          USER_POOL_ID: "ca-central-1_9qTJICjCa"
+          CLIENT_ID: "4782dhvc02sostk2p7ag8oj98l"
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HelloWorldApi
+            Path: /hello
+            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+Outputs:
+  # API Gateway endpoint URL
+  HelloWorldApiEndpoint:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value: !Sub https://${HelloWorldApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value: !GetAtt HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt HelloWorldFunctionRole.Arn
+  CognitoUserPoolId:
+    Description: ID of the Cognito User Pool
+    Value: "ca-central-1_9qTJICjCa"
+  CognitoUserPoolClientId:
+    Description: ID of the Cognito User Pool Client
+    Value: "4782dhvc02sostk2p7ag8oj98l"

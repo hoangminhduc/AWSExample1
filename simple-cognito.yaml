@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  Amazon Cognito Authentication Resources
+  Simple template to create Cognito User Pool and Client for authentication.
+
+Resources:
+  # Cognito User Pool for authentication
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: HelloWorldUserPool
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      MfaConfiguration: "OFF"
+      EmailConfiguration:
+        EmailSendingAccount: "COGNITO_DEFAULT"
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: HelloWorldUserPoolClient
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      SupportedIdentityProviders:
+        - COGNITO
+
+Outputs:
+  UserPoolId:
+    Description: ID of the Cognito User Pool
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Description: ID of the Cognito User Pool Client
+    Value: !Ref UserPoolClient

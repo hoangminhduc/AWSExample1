@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.global.parameters]
+stack_name = "HelloWorldLambda"
+region = "ca-central-1"
+
+[default.deploy.parameters]
+confirm_changeset = true
+stack_name = "HelloWorldLambda"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+s3_prefix = "HelloWorldLambda"
+disable_rollback = true
+image_repositories = []

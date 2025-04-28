@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito Authentication Demo</title>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1001.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@5.2.10/dist/amazon-cognito-identity.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            min-height: 100px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #ddd;
+            border: 1px solid #ccc;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cognito Authentication Demo</h1>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('login')">Login</div>
+            <div class="tab" onclick="showTab('register')">Register</div>
+            <div class="tab" onclick="showTab('verify')">Verify</div>
+            <div class="tab" onclick="showTab('api')">Call API</div>
+        </div>
+
+        <div id="login" class="tab-content active">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <label for="loginUsername">Email:</label>
+                <input type="email" id="loginUsername" required>
+
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" required>
+
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <div id="register" class="tab-content">
+            <h2>Register</h2>
+            <form id="registerForm">
+                <label for="registerUsername">Email:</label>
+                <input type="email" id="registerUsername" required>
+
+                <label for="registerPassword">Password:</label>
+                <input type="password" id="registerPassword" required>
+
+                <button type="submit">Register</button>
+            </form>
+        </div>
+
+        <div id="verify" class="tab-content">
+            <h2>Verify Account</h2>
+            <form id="verifyForm">
+                <label for="verifyUsername">Email:</label>
+                <input type="email" id="verifyUsername" required>
+
+                <label for="verificationCode">Verification Code:</label>
+                <input type="text" id="verificationCode" required>
+
+                <button type="submit">Verify</button>
+            </form>
+        </div>
+
+        <div id="api" class="tab-content">
+            <h2>Call Protected API</h2>
+            <button id="callApiBtn">Call Hello World API</button>
+        </div>
+
+        <div class="result">
+            <h3>Result:</h3>
+            <pre id="result"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Cognito configuration
+        const poolData = {
+            UserPoolId: 'ca-central-1_9qTJICjCa',
+            ClientId: '4782dhvc02sostk2p7ag8oj98l'
+        };
+
+        // API Gateway endpoint
+        const apiEndpoint = 'https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/hello/';
+
+        // Initialize the Cognito User Pool
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        // Store the current authenticated user
+        let currentUser = null;
+        let idToken = null;
+
+        // Show the selected tab
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show the selected tab
+            document.getElementById(tabId).classList.add('active');
+
+            // Activate the selected tab button
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabId)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+
+        // Display result
+        function showResult(message) {
+            document.getElementById('result').textContent = typeof message === 'object'
+                ? JSON.stringify(message, null, 2)
+                : message;
+        }
+
+        // Register a new user
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+
+            // Prepare the attributes
+            const attributeList = [
+                new AmazonCognitoIdentity.CognitoUserAttribute({
+                    Name: 'email',
+                    Value: username
+                })
+            ];
+
+            // Sign up the user
+            userPool.signUp(username, password, attributeList, null, function(err, result) {
+                if (err) {
+                    showResult('Registration error: ' + err.message);
+                    return;
+                }
+
+                currentUser = result.user;
+                showResult('Registration successful! Please check your email for verification code.');
+
+                // Switch to the verify tab
+                showTab('verify');
+                document.getElementById('verifyUsername').value = username;
+            });
+        });
+
+        // Verify a user's account
+        document.getElementById('verifyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('verifyUsername').value;
+            const code = document.getElementById('verificationCode').value;
+
+            // Create a Cognito User object
+            const userData = {
+                Username: username,
+                Pool: userPool
+            };
+
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+            // Confirm the registration
+            cognitoUser.confirmRegistration(code, true, function(err, result) {
+                if (err) {
+                    showResult('Verification error: ' + err.message);
+                    return;
+                }
+
+                showResult('Verification successful! You can now login.');
+
+                // Switch to the login tab
+                showTab('login');
+                document.getElementById('loginUsername').value = username;
+            });
+        });
+
+        // Login a user
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            // Prepare the authentication details
+            const authenticationData = {
+                Username: username,
+                Password: password
+            };
+
+            const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+
+            // Create a Cognito User object
+            const userData = {
+                Username: username,
+                Pool: userPool
+            };
+
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+            // Authenticate the user
+            cognitoUser.authenticateUser(authenticationDetails, {
+                onSuccess: function(result) {
+                    // Get the ID token
+                    idToken = result.getIdToken().getJwtToken();
+                    currentUser = cognitoUser;
+
+                    showResult('Login successful! You can now call the API.\n\nID Token: ' + idToken.substring(0, 20) + '...');
+
+                    // Switch to the API tab
+                    showTab('api');
+                },
+                onFailure: function(err) {
+                    showResult('Login error: ' + err.message);
+                    console.error('Authentication error details:', err);
+                }
+            });
+        });
+
+        // Call the protected API
+        document.getElementById('callApiBtn').addEventListener('click', function() {
+            if (!idToken) {
+                showResult('You need to login first!');
+                showTab('login');
+                return;
+            }
+
+            // Display the request we're about to make
+            showResult('Calling API: ' + apiEndpoint + '\nWith token: ' + idToken.substring(0, 20) + '...');
+
+            // Make the API request with the ID token
+            fetch(apiEndpoint, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken
+                },
+                mode: 'cors' // Explicitly request CORS mode
+            })
+            .then(response => {
+                showResult('Response status: ' + response.status + ' ' + response.statusText);
+
+                if (!response.ok) {
+                    throw new Error('API request failed with status ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                showResult('API Response: ' + JSON.stringify(data, null, 2));
+            })
+            .catch(error => {
+                console.error('API Error details:', error);
+                showResult('API Error: ' + error.message + '\n\nThis may be due to CORS restrictions. Try using the test-api.js script instead.');
+            });
+        });
+
+        // Check if a user is already logged in
+        window.onload = function() {
+            const cognitoUser = userPool.getCurrentUser();
+
+            if (cognitoUser != null) {
+                cognitoUser.getSession(function(err, session) {
+                    if (err) {
+                        showResult('Session error: ' + err.message);
+                        return;
+                    }
+
+                    if (session.isValid()) {
+                        // Get the ID token
+                        idToken = session.getIdToken().getJwtToken();
+                        currentUser = cognitoUser;
+
+                        showResult('You are already logged in. You can call the API.');
+
+                        // Switch to the API tab
+                        showTab('api');
+                    }
+                });
+            }
+        };
+    </script>
+</body>
+</html>

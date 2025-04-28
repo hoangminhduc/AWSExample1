@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Testing Instructions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .note {
+            background-color: #fffde7;
+            padding: 10px;
+            border-left: 4px solid #ffd600;
+            margin: 20px 0;
+        }
+        .token-input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Testing the Protected API</h1>
+
+        <p>Due to CORS restrictions, you might not be able to call the API directly from the browser. Here's how to test the API using the provided Node.js script:</p>
+
+        <h2>Step 1: Get Your Authentication Token</h2>
+        <ol>
+            <li>Open <a href="login.html">login.html</a> in your browser</li>
+            <li>Register a new user if you haven't already</li>
+            <li>Verify your email with the verification code</li>
+            <li>Log in with your credentials</li>
+            <li>After successful login, you'll see your ID token in the result area</li>
+            <li>Copy this token (it starts with "eyJ...")</li>
+        </ol>
+
+        <h2>Step 2: Run the Test Script</h2>
+        <p>Paste your token here:</p>
+        <input type="text" id="tokenInput" class="token-input" placeholder="Paste your token here...">
+        <button onclick="generateCommand()">Generate Command</button>
+
+        <div id="commandOutput" style="display: none;">
+            <h3>Run this command in your terminal:</h3>
+            <pre><code id="commandText"></code></pre>
+            <button onclick="copyCommand()">Copy Command</button>
+        </div>
+
+        <h2>Expected Output</h2>
+        <p>If everything works correctly, you should see a response like this:</p>
+
+        <pre><code>Testing API: https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/hello/
+Using token: eyJraWQiOiJcL1wvQWtLR...
+
+Status Code: 200 OK
+Headers: {
+  "date": "Sun, 27 Apr 2025 00:00:00 GMT",
+  "content-type": "application/json",
+  "content-length": "157",
+  "connection": "close",
+  "x-amzn-requestid": "12345678-1234-1234-1234-123456789012"
+}
+
+Response Body:
+{
+  "message": "Hello from a protected Lambda function!",
+  "user": {
+    "id": "12345678-1234-1234-1234-123456789012",
+    "email": "your.email@example.com"
+  },
+  "timestamp": "2025-04-27T00:00:00.000Z"
+}</code></pre>
+
+        <div class="note">
+            <strong>Note:</strong> If you get a 401 Unauthorized error, your token might have expired. Tokens typically expire after 1 hour. Go back to Step 1 to get a new token.
+        </div>
+
+        <h2>Understanding CORS Issues</h2>
+        <p>CORS (Cross-Origin Resource Sharing) is a security feature implemented by browsers that prevents web pages from making requests to a different domain than the one that served the web page. Since you're opening the HTML file locally (using the <code>file://</code> protocol), the browser considers API calls to <code>https://</code> domains as cross-origin requests.</p>
+
+        <p>The Node.js script works because it's not subject to browser CORS restrictions.</p>
+
+        <h2>Alternative: Using Postman</h2>
+        <p>You can also test the API using Postman:</p>
+        <ol>
+            <li>Download and install <a href="https://www.postman.com/downloads/" target="_blank">Postman</a></li>
+            <li>Create a new GET request to <code>https://uuugs6p1je.execute-api.ca-central-1.amazonaws.com/Prod/hello/</code></li>
+            <li>In the Headers tab, add a header with key <code>Authorization</code> and value <code>Bearer YOUR_TOKEN</code></li>
+            <li>Click Send to make the request</li>
+        </ol>
+    </div>
+
+    <script>
+        function generateCommand() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (!token) {
+                alert('Please paste your token first!');
+                return;
+            }
+
+            const command = `node test-token.js "${token}"`;
+            document.getElementById('commandText').textContent = command;
+            document.getElementById('commandOutput').style.display = 'block';
+        }
+
+        function copyCommand() {
+            const commandText = document.getElementById('commandText').textContent;
+            navigator.clipboard.writeText(commandText)
+                .then(() => {
+                    alert('Command copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy command. Please select and copy manually.');
+                });
+        }
+    </script>
+</body>
+</html>

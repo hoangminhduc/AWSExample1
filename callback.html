@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Callback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            min-height: 100px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Authentication Complete</h1>
+        <p>You have been successfully authenticated. You can now return to the main page.</p>
+        
+        <button onclick="window.location.href='login.html'">Return to Main Page</button>
+        
+        <div class="result">
+            <h3>Token Information:</h3>
+            <pre id="tokenInfo"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Parse the URL hash to get the tokens
+        function parseHash() {
+            const hash = window.location.hash.substring(1);
+            const params = {};
+            
+            hash.split('&').forEach(param => {
+                const [key, value] = param.split('=');
+                params[key] = decodeURIComponent(value);
+            });
+            
+            return params;
+        }
+        
+        // Display the token information
+        window.onload = function() {
+            const params = parseHash();
+            
+            if (params.id_token) {
+                // Store the tokens in localStorage
+                localStorage.setItem('id_token', params.id_token);
+                localStorage.setItem('access_token', params.access_token);
+                
+                // Display token information
+                document.getElementById('tokenInfo').textContent = 
+                    `ID Token: ${params.id_token.substring(0, 20)}...\n` +
+                    `Access Token: ${params.access_token.substring(0, 20)}...\n` +
+                    `Token Type: ${params.token_type}\n` +
+                    `Expires In: ${params.expires_in} seconds`;
+            } else {
+                document.getElementById('tokenInfo').textContent = 'No tokens found in the URL.';
+            }
+        };
+    </script>
+</body>
+</html>

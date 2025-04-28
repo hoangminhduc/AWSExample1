@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  Amazon Cognito Authentication Resources
+  Template to create Cognito User Pool, Client, and Domain for authentication.
+
+Resources:
+  # Cognito User Pool for authentication
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: HelloWorldUserPool
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      MfaConfiguration: "OFF"
+      EmailConfiguration:
+        EmailSendingAccount: "COGNITO_DEFAULT"
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: HelloWorldUserPoolClient
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      SupportedIdentityProviders:
+        - COGNITO
+
+# Removed UserPoolDomain due to access denied errors
+
+  # S3 Bucket for hosting the login page
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: ObjectWriter
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - HEAD
+              - PUT
+              - POST
+              - DELETE
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+      Tags:
+        - Key: Application
+          Value: HelloWorldCognito
+        - Key: Environment
+          Value: Development
+
+  # Bucket Policy to allow public access to the website
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join ['', ['arn:aws:s3:::', !Ref WebsiteBucket, '/*']]
+            Principal: '*'
+
+Outputs:
+  WebsiteURL:
+    Description: URL for the S3 website hosting the login page
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+  UserPoolId:
+    Description: ID of the Cognito User Pool
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Description: ID of the Cognito User Pool Client
+    Value: !Ref UserPoolClient
+# Removed CognitoHostedUI output since we removed UserPoolDomain

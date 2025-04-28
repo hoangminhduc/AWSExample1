@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  Hello World AWS Lambda and Amazon API Gateway REST API
+  Sample AWS SAM template to create a simple Lambda function connected to a REST API.
+  Now with Amazon Cognito authentication for secure access.
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  # Cognito User Pool for authentication
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: HelloWorldUserPool-Updated
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      MfaConfiguration: "OFF"
+      EmailConfiguration:
+        EmailSendingAccount: "COGNITO_DEFAULT"
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: HelloWorldUserPoolClient
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      SupportedIdentityProviders:
+        - COGNITO
+
+  # Cognito User Pool Domain
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub 'hello-world-app-${AWS::AccountId}'
+      UserPoolId: !Ref UserPool
+
+  # We'll use SAM's built-in Authorizer instead of creating a custom one
+
+  # S3 Bucket for hosting the login page
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - HEAD
+              - PUT
+              - POST
+              - DELETE
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+      Tags:
+        - Key: Application
+          Value: HelloWorldCognito
+        - Key: Environment
+          Value: Development
+
+  # Bucket Policy to allow public access to the website
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join ['', ['arn:aws:s3:::', !Ref WebsiteBucket, '/*']]
+            Principal: '*'
+
+  # Lambda function for protected API
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          USER_POOL_ID: "ca-central-1_9qTJICjCa"
+          CLIENT_ID: "4782dhvc02sostk2p7ag8oj98l"
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+            Auth:
+              Authorizer: COGNITO_USER_POOLS
+              AuthorizationScopes:
+                - email
+                - openid
+                - profile
+              UserPoolArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/ca-central-1_9qTJICjCa"
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value: !GetAtt HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt HelloWorldFunctionRole.Arn
+  CognitoUserPoolId:
+    Description: ID of the Cognito User Pool
+    Value: "ca-central-1_9qTJICjCa"
+  CognitoUserPoolClientId:
+    Description: ID of the Cognito User Pool Client
+    Value: "4782dhvc02sostk2p7ag8oj98l"
